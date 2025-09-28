@@ -1,47 +1,44 @@
 "use client";
 
-import Image from "next/image";
 import { Product } from "@/types";
+import Image from "next/image";
 import IconButton from "./icon-button";
 import { Expand, ShoppingCart } from "lucide-react";
 import Currency from "./currency";
+
 import { useRouter } from "next/navigation";
 import { MouseEventHandler } from "react";
-import PreviewModal from "./preview-modal"; // Keep this line for the component import (though not strictly needed in this file)
-import usePreviewModal from "@/hooks/use-preview-model"; // Make sure this hook is correct
+import useCart from "@/hooks/use-cart";
+import usePreviewModal from "@/hooks/use-preview-model";
 
 interface ProductCard {
   data: Product;
 }
 
-const ProductCard: React.FC<ProductCard> = ({
-  data }) => {
-    // CORRECT: Destructure onOpen from the hook result
-    const previewModal = usePreviewModal(); // Get the hook instance
-    const { onOpen } = usePreviewModal(); // You should use this method OR destructure 'onOpen' from 'previewModal'
-    
-    // If you prefer to keep 'previewModal' as is, you would do:
-    // const previewModal = usePreviewModal();
-    // ... then use previewModal.onOpen()
-    
-    // Let's stick with the instance name for clarity:
-    
-    const router = useRouter();
-    const handleClick= () => {
-      router.push(`/product/${data?.id}`)
+const ProductCard: React.FC<ProductCard> = ({ data }) => {
+  const previewModal = usePreviewModal();
+  const cart = useCart(); 
+  const router = useRouter();
 
-    }
+  const handleClick = () => {
+    router.push(`/product/${data?.id}`);
+  };
 
+  const onPreview: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.stopPropagation();
+    previewModal.onOpen(data);
+  };
 
-    const onPreview: MouseEventHandler<HTMLButtonElement> = (event) => {
-      event.stopPropagation();
-
-      // FIX IS HERE: Call onOpen from the hook instance
-      previewModal.onOpen(data);
-    }
+  const onAddToCart: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.stopPropagation();
+    cart.addItem(data); 
+  };
 
   return (
-    <div onClick={handleClick} className="bg-white group cursor-pointer rounded-xl border p-3 space-y-4">
+    <div
+      onClick={handleClick}
+      className="bg-white group cursor-pointer rounded-xl border p-3 space-y-4"
+    >
       {/* Images and Actions */}
       <div className="aspect-square rounded-xl bg-gray-100 relative">
         <Image
@@ -57,19 +54,17 @@ const ProductCard: React.FC<ProductCard> = ({
               icon={<Expand size={20} className="text-gray-600" />}
             />
             <IconButton
-              onClick={() => {}}
+              onClick={onAddToCart}
               icon={<ShoppingCart size={20} className="text-gray-600" />}
             />
           </div>
         </div>
       </div>
-
-      {/* Description */}  
+      {/* Description */}
       <div>
         <p className="font-semibold text-lg">{data.name}</p>
         <p className="text-sm text-gray-500">{data.category?.name}</p>
       </div>
-
       {/* Price */}
       <div className="flex items-center justify-between">
         <Currency value={data?.price} />
