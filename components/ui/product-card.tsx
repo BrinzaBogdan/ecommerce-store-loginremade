@@ -6,18 +6,40 @@ import IconButton from "./icon-button";
 import { Expand, ShoppingCart } from "lucide-react";
 import Currency from "./currency";
 import { useRouter } from "next/navigation";
+import { MouseEventHandler } from "react";
+import PreviewModal from "./preview-modal"; // Keep this line for the component import (though not strictly needed in this file)
+import usePreviewModal from "@/hooks/use-preview-model"; // Make sure this hook is correct
 
 interface ProductCard {
   data: Product;
 }
 
 const ProductCard: React.FC<ProductCard> = ({
-     data }) => {
-        const router = useRouter();
-        const handleClick= () => {
-            router.push(`/product/${data?.id}`)
+  data }) => {
+    // CORRECT: Destructure onOpen from the hook result
+    const previewModal = usePreviewModal(); // Get the hook instance
+    const { onOpen } = usePreviewModal(); // You should use this method OR destructure 'onOpen' from 'previewModal'
+    
+    // If you prefer to keep 'previewModal' as is, you would do:
+    // const previewModal = usePreviewModal();
+    // ... then use previewModal.onOpen()
+    
+    // Let's stick with the instance name for clarity:
+    
+    const router = useRouter();
+    const handleClick= () => {
+      router.push(`/product/${data?.id}`)
 
-        }
+    }
+
+
+    const onPreview: MouseEventHandler<HTMLButtonElement> = (event) => {
+      event.stopPropagation();
+
+      // FIX IS HERE: Call onOpen from the hook instance
+      previewModal.onOpen(data);
+    }
+
   return (
     <div onClick={handleClick} className="bg-white group cursor-pointer rounded-xl border p-3 space-y-4">
       {/* Images and Actions */}
@@ -31,7 +53,7 @@ const ProductCard: React.FC<ProductCard> = ({
         <div className="opacity-0 group-hover:opacity-100 transition absolute w-full px-6 bottom-5">
           <div className="flex gap-x-6 justify-center">
             <IconButton
-              onClick={() => {}}
+              onClick={onPreview}
               icon={<Expand size={20} className="text-gray-600" />}
             />
             <IconButton
@@ -42,7 +64,7 @@ const ProductCard: React.FC<ProductCard> = ({
         </div>
       </div>
 
-      {/* Description */}  
+      {/* Description */}  
       <div>
         <p className="font-semibold text-lg">{data.name}</p>
         <p className="text-sm text-gray-500">{data.category?.name}</p>
